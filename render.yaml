@@ -6,7 +6,6 @@ services:
     plan: starter
     dockerfilePath: ./simulator/Dockerfile
     dockerContext: ./simulator
-    healthCheckPath: /health
     envVars:
       - key: SIMULATOR_PORT
         value: "8001"
