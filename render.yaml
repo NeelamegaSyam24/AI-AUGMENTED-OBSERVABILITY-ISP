@@ -1,33 +1,22 @@
 services:
-  - type: pserv
-    name: isp-simulator
+  - type: web
+    name: isp-ai-observability-api
     runtime: docker
     region: oregon
-    plan: starter
-    dockerfilePath: ./simulator/Dockerfile
-    dockerContext: ./simulator
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
     envVars:
+      - key: PORT
+        value: "10000"
+      - key: API_PORT
+        value: "10000"
       - key: SIMULATOR_PORT
         value: "8001"
       - key: SIMULATOR_INTERVAL
         value: "5"
       - key: SIMULATOR_DEFAULT_SCENARIO
         value: normal
-
-  - type: web
-    name: isp-api
-    runtime: docker
-    region: oregon
-    plan: starter
-    dockerfilePath: ./api/Dockerfile
-    dockerContext: ./api
-    healthCheckPath: /health
-    envVars:
-      - key: API_HOST
-        value: 0.0.0.0
-      - key: API_PORT
-        value: "10000"
-      - key: SIMULATOR_URL
-        value: http://isp-simulator:8001
       - key: CORS_ORIGINS
-        sync: false
+        value: https://isp-ai-observability.pages.dev

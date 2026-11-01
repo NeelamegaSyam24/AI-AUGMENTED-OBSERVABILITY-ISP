@@ -230,11 +230,11 @@ The React frontend is deployed at **https://isp-ai-observability.pages.dev/** an
    - **Build command:** `npm run build`
    - **Build output directory:** `dist`
    - Leave `VITE_API_URL` unset for the first build. After Render is deployed, set it to the API's HTTPS URL and redeploy.
-3. In Render, create a Blueprint from the repository and use `render.yaml`. When prompted for `CORS_ORIGINS`, enter the Pages origin exactly, for example `https://isp-ai-observability.pages.dev` (no trailing slash).
+3. In Render, create a Blueprint from the repository and use `render.yaml`. The single free service runs the simulator and API in one container; no paid services or card details are required.
 4. Wait for the Render API health check to pass, then set the Pages `VITE_API_URL` build variable to the Render API HTTPS URL and trigger a new Pages deployment.
 5. Verify the API at `<Render API URL>/health` and the dashboard at the Pages URL.
 
-The Render Blueprint uses paid `starter` container plans; check Render's current pricing before creating resources. The simulator is private, but the API web service is publicly reachable and this prototype has no user authentication. Use only non-sensitive demo data; do not treat it as a production service until authentication and rate limiting are added. Prometheus and Grafana remain local Compose services and are not deployed by this Blueprint.
+Render's free service may sleep when idle and has limited compute, so the first request after inactivity may take time and performance is intended for demonstration rather than production. The API is publicly reachable and this prototype has no user authentication. Use only non-sensitive demo data; do not treat it as a production service until authentication and rate limiting are added. Prometheus and Grafana remain local Compose services and are not deployed by this Blueprint.
 
 For a manual Pages deployment after authenticating Wrangler with Cloudflare, build first and deploy from the frontend directory:
 
