@@ -1,0 +1,158 @@
+# ============================================================
+#  AI-AUGMENTED OBSERVABILITY SYSTEM FOR ISP
+#  Docker Compose Orchestration
+# ============================================================
+
+networks:
+  isp-observability:
+    driver: bridge
+    name: isp-observability-network
+
+volumes:
+  grafana-data:
+    driver: local
+  prometheus-data:
+    driver: local
+
+services:
+
+  # ─────────────────────────────────────────────────────────
+  # 1. NETWORK SIMULATOR
+  # ─────────────────────────────────────────────────────────
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: isp-simulator
+    restart: unless-stopped
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${SIMULATOR_PORT:-8001}:8001"
+    environment:
+      - SIMULATOR_PORT=8001
+      - SIMULATOR_INTERVAL=${SIMULATOR_INTERVAL:-5}
+      - SIMULATOR_DEFAULT_SCENARIO=${SIMULATOR_DEFAULT_SCENARIO:-normal}
+    networks:
+      - isp-observability
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────────────────
+  # 2. ML / API SERVICE  (FastAPI + ML models + AI engine)
+  # ─────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: isp-api
+    restart: unless-stopped
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${API_PORT:-8000}:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - SIMULATOR_URL=http://simulator:8001
+      - ML_MODEL_DIR=/app/models
+      - ANOMALY_CONTAMINATION=${ANOMALY_CONTAMINATION:-0.1}
+      - ANOMALY_RANDOM_STATE=${ANOMALY_RANDOM_STATE:-42}
+      - QOE_RANDOM_STATE=${QOE_RANDOM_STATE:-42}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    volumes:
+      - ./api/app/models:/app/models
+    networks:
+      - isp-observability
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      simulator:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────────────────
+  # 3. PROMETHEUS
+  # ─────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: isp-prometheus
+    restart: unless-stopped
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+    networks:
+      - isp-observability
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────
+  # 4. GRAFANA
+  # ─────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: isp-grafana
+    restart: unless-stopped
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - isp-observability
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────────────────
+  # 5. REACT FRONTEND
+  # ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+        VITE_GRAFANA_URL: ${VITE_GRAFANA_URL:-http://localhost:3000}
+    container_name: isp-frontend
+    restart: unless-stopped
+    ports:
+      - "${HOST_IP:-127.0.0.1}:${FRONTEND_PORT:-5173}:80"
+    networks:
+      - isp-observability
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      api:
+        condition: service_healthy

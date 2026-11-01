@@ -1,0 +1,64 @@
+{
+  "feature_columns": [
+    "latency_ms",
+    "packet_loss_percent",
+    "jitter_ms",
+    "throughput_mbps",
+    "bandwidth_utilization_percent",
+    "router_cpu_percent",
+    "router_memory_percent",
+    "network_stress"
+  ],
+  "qoe_classes": [
+    "GOOD",
+    "MODERATE",
+    "POOR"
+  ],
+  "qoe_class_to_index": {
+    "GOOD": 0,
+    "MODERATE": 1,
+    "POOR": 2
+  },
+  "qoe_accuracy": 0.99875,
+  "qoe_report": {
+    "GOOD": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 755.0
+    },
+    "MODERATE": {
+      "precision": 0.9924812030075187,
+      "recall": 0.9962264150943396,
+      "f1-score": 0.9943502824858758,
+      "support": 265.0
+    },
+    "POOR": {
+      "precision": 0.9992748368382887,
+      "recall": 0.9985507246376811,
+      "f1-score": 0.9989126495106923,
+      "support": 1380.0
+    },
+    "accuracy": 0.99875,
+    "macro avg": {
+      "precision": 0.9972520132819357,
+      "recall": 0.9982590465773402,
+      "f1-score": 0.9977543106655227,
+      "support": 2400.0
+    },
+    "weighted avg": {
+      "precision": 0.9987528306807629,
+      "recall": 0.99875,
+      "f1-score": 0.9987509504931302,
+      "support": 2400.0
+    }
+  },
+  "anomaly_contamination": 0.1,
+  "training_samples": 2400,
+  "random_state": 42,
+  "qoe_label_rules": {
+    "GOOD": "latency_ms < 60 AND packet_loss_percent < 1 AND bandwidth_utilization_percent < 75",
+    "POOR": "latency_ms > 130 OR packet_loss_percent > 5 OR bandwidth_utilization_percent > 90",
+    "MODERATE": "all other observations"
+  }
+}

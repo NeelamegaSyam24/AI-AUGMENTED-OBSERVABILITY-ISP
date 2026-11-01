@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment files
+.env
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Model files (generated, not source)
+ml-service/models/*.pkl
+ml-service/models/*.joblib
+
+# Docker volumes
+grafana-data/
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build output
+frontend/dist/

@@ -1,0 +1,110 @@
+groups:
+  - name: isp_network_alerts
+    interval: 30s
+    rules:
+
+      # ── Latency Alert ─────────────────────────────────────
+      - alert: HighNetworkLatency
+        expr: isp_network_latency_ms > 100
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High network latency detected"
+          description: "Network latency is {{ $value | humanize }}ms, exceeding 100ms threshold."
+
+      - alert: CriticalNetworkLatency
+        expr: isp_network_latency_ms > 160
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical network latency"
+          description: "Network latency is {{ $value | humanize }}ms, exceeding 160ms critical threshold."
+
+      # ── Packet Loss Alert ──────────────────────────────────
+      - alert: HighPacketLoss
+        expr: isp_network_packet_loss_percent > 2
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High packet loss detected"
+          description: "Packet loss is {{ $value | humanize }}%, exceeding 2% threshold."
+
+      - alert: CriticalPacketLoss
+        expr: isp_network_packet_loss_percent > 5
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical packet loss"
+          description: "Packet loss is {{ $value | humanize }}%, exceeding 5% critical threshold."
+
+      # ── Bandwidth Alert ────────────────────────────────────
+      - alert: HighBandwidthUtilization
+        expr: isp_bandwidth_utilization_percent > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High bandwidth utilization"
+          description: "Bandwidth utilization is {{ $value | humanize }}%, approaching capacity."
+
+      - alert: CriticalBandwidthUtilization
+        expr: isp_bandwidth_utilization_percent > 92
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical bandwidth utilization"
+          description: "Bandwidth utilization is {{ $value | humanize }}%, near saturation."
+
+      # ── Router CPU Alert ───────────────────────────────────
+      - alert: HighRouterCPU
+        expr: isp_router_cpu_usage_percent > 80
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High router CPU usage"
+          description: "Router CPU usage is {{ $value | humanize }}%."
+
+      - alert: CriticalRouterCPU
+        expr: isp_router_cpu_usage_percent > 90
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical router CPU usage"
+          description: "Router CPU at {{ $value | humanize }}% — possible overload."
+
+      # ── Router Memory Alert ────────────────────────────────
+      - alert: HighRouterMemory
+        expr: isp_router_memory_usage_percent > 80
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High router memory usage"
+          description: "Router memory usage is {{ $value | humanize }}%."
+
+      # ── AI Anomaly Alert ───────────────────────────────────
+      - alert: AIAnomalyDetected
+        expr: isp_ai_anomaly_detected == 1
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "AI anomaly detected"
+          description: "Isolation Forest has flagged the current network observation as anomalous."
+
+      # ── QoE Alert ──────────────────────────────────────────
+      - alert: PoorQoE
+        expr: isp_ai_qoe_score < 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Poor customer QoE estimated"
+          description: "QoE classifier estimates POOR network experience for customers."
